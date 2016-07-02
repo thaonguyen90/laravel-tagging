@@ -2,7 +2,6 @@
 
 use Conner\Tagging\Contracts\TaggingUtility;
 
-
 /**
  * Utility functions to help with various tagging functionality.
  *
@@ -158,17 +157,18 @@ class Util implements TaggingUtility
 	 *
 	 * @param string $tagString
 	 */
-	public function incrementCount($tagString, $tagSlug, $count)
+	public function incrementCount($tagString, $tagSlug, $count, $type)
 	{
 		if($count <= 0) { return; }
 		$model = $this->tagModelString();
 		
-		$tag = $model::where('slug', '=', $tagSlug)->first();
+		$tag = $model::where('slug', '=', $tagSlug)->where('type','=',$type)->first();
 
 		if(!$tag) {
 			$tag = new $model;
 			$tag->name = $tagString;
 			$tag->slug = $tagSlug;
+			$tag->type = $type;
 			$tag->suggest = false;
 			$tag->save();
 		}
@@ -183,12 +183,12 @@ class Util implements TaggingUtility
 	 *
 	 * @param string $tagString
 	 */
-	public function decrementCount($tagString, $tagSlug, $count)
+	public function decrementCount($tagString, $tagSlug, $count, $type)
 	{
 		if($count <= 0) { return; }
 		$model = $this->tagModelString();
 		
-		$tag = $model::where('slug', '=', $tagSlug)->first();
+		$tag = $model::where('slug', '=', $tagSlug)->where('type','=',$type)->first();
 	
 		if($tag) {
 			$tag->count = $tag->count - $count;

@@ -92,12 +92,12 @@ trait Taggable
 	 *
 	 * @param $tagName string or array
 	 */
-	public function tag($tagNames)
+	public function tag($tagNames, $type = 0)
 	{
 		$tagNames = static::$taggingUtility->makeTagArray($tagNames);
-		
+
 		foreach($tagNames as $tagName) {
-			$this->addTag($tagName);
+			$this->addTag($tagName,$type);
 		}
 	}
 	
@@ -130,18 +130,18 @@ trait Taggable
 	 *
 	 * @param $tagName string or array (or null to remove all tags)
 	 */
-	public function untag($tagNames=null)
+	public function untag($tagNames = null,$type = 0)
 	{
 		if(is_null($tagNames)) {
 			$tagNames = $this->tagNames();
 		}
-		
+
 		$tagNames = static::$taggingUtility->makeTagArray($tagNames);
-		
+
 		foreach($tagNames as $tagName) {
-			$this->removeTag($tagName);
+			$this->removeTag($tagName,$type);
 		}
-		
+
 		if(static::shouldDeleteUnused()) {
 			static::$taggingUtility->deleteUnusedTags();
 		}
@@ -152,18 +152,18 @@ trait Taggable
 	 *
 	 * @param $tagName string or array
 	 */
-	public function retag($tagNames)
+	public function retag($tagNames,$type = 0)
 	{
 		$tagNames = static::$taggingUtility->makeTagArray($tagNames);
 		$currentTagNames = $this->tagNames();
-		
+
 		$deletions = array_diff($currentTagNames, $tagNames);
 		$additions = array_diff($tagNames, $currentTagNames);
-		
-		$this->untag($deletions);
+
+		$this->untag($deletions,$type);
 
 		foreach($additions as $tagName) {
-			$this->addTag($tagName);
+			$this->addTag($tagName,$type);
 		}
 	}
 	
@@ -230,30 +230,31 @@ trait Taggable
 	 *
 	 * @param $tagName string
 	 */
-	private function addTag($tagName)
+	private function addTag($tagName,$type = 0)
 	{
 		$tagName = trim($tagName);
-		
+
 		$normalizer = config('tagging.normalizer');
 		$normalizer = $normalizer ?: [static::$taggingUtility, 'slug'];
 
 		$tagSlug = call_user_func($normalizer, $tagName);
-		
-		$previousCount = $this->tagged()->where('tag_slug', '=', $tagSlug)->take(1)->count();
+
+		$previousCount = $this->tagged()->where('tag_slug', '=', $tagSlug)->where('tag_type', '=', $type)->take(1)->count();
 		if($previousCount >= 1) { return; }
-		
+
 		$displayer = config('tagging.displayer');
 		$displayer = empty($displayer) ? '\Illuminate\Support\Str::title' : $displayer;
-		
+
 		$tagged = new Tagged(array(
-			'tag_name'=>call_user_func($displayer, $tagName),
-			'tag_slug'=>$tagSlug,
+				'tag_name'=>call_user_func($displayer, $tagName),
+				'tag_slug'=>$tagSlug,
+				'tag_type'=>$type
 		));
-		
+
 		$this->tagged()->save($tagged);
 
-		static::$taggingUtility->incrementCount($tagName, $tagSlug, 1);
-		
+		static::$taggingUtility->incrementCount($tagName, $tagSlug, 1,$type);
+
 		unset($this->relations['tagged']);
 		event(new TagAdded($this));
 	}
@@ -263,19 +264,19 @@ trait Taggable
 	 *
 	 * @param $tagName string
 	 */
-	private function removeTag($tagName)
+	private function removeTag($tagName,$type = 0)
 	{
 		$tagName = trim($tagName);
-		
+
 		$normalizer = config('tagging.normalizer');
 		$normalizer = $normalizer ?: [static::$taggingUtility, 'slug'];
-		
+
 		$tagSlug = call_user_func($normalizer, $tagName);
-		
-		if($count = $this->tagged()->where('tag_slug', '=', $tagSlug)->delete()) {
-			static::$taggingUtility->decrementCount($tagName, $tagSlug, $count);
+
+		if($count = $this->tagged()->where('tag_slug', '=', $tagSlug)->where('tag_type', '=', $type)->delete()) {
+			static::$taggingUtility->decrementCount($tagName, $tagSlug, $count, $type);
 		}
-		
+
 		unset($this->relations['tagged']);
 		event(new TagRemoved($this));
 	}

@@ -11,7 +11,7 @@ class Tag extends Eloquent
 	protected $table = 'tagging_tags';
 	public $timestamps = false;
 	protected $softDelete = false;
-	public $fillable = ['name'];
+	public $fillable = ['name','type'];
 	protected $taggingUtility;
 	
 	/**

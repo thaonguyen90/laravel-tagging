@@ -48,7 +48,7 @@ interface TaggableContract {
 	 *
 	 * @param $tagName string or array
 	 */
-	public function retag($tagNames);
+	public function retag($tagNames,$type);
 
 	/**
 	 * Filter model to subset with the given tags

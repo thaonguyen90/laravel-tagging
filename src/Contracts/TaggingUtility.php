@@ -37,7 +37,7 @@ interface TaggingUtility
 	 *
 	 * @param string $tagString
 	 */
-	public function incrementCount($tagString, $tagSlug, $count);
+	public function incrementCount($tagString, $tagSlug, $count,$type);
 	
 	/**
 	 * Private! Please do not call this function directly, let the Tag library use it.
@@ -45,7 +45,7 @@ interface TaggingUtility
 	 *
 	 * @param string $tagString
 	 */
-	public function decrementCount($tagString, $tagSlug, $count);
+	public function decrementCount($tagString, $tagSlug, $count,$type);
 	
 	/**
 	 * Look at the tags table and delete any tags that are no londer in use by any taggable database rows.
